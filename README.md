@@ -1,6 +1,6 @@
 # 🚨 MBR Corruptor
 
-> **Warning:** This script is highly destructive. Running it will corrupt the Master Boot Record (MBR) of all connected physical disks and force a Blue Screen of Death (BSOD) on Windows.  
+> **Warning:** This virus is highly destructive. Running it will corrupt the Master Boot Record (MBR) of all connected physical disks and force a Blue Screen of Death (BSOD) on Windows.  
 > **Do not use it on any system that holds important data.**  
 
 This project is purely educational, meant for experimentation in controlled environments. **Use at your own risk.**
