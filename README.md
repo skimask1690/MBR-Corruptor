@@ -25,7 +25,7 @@ This project is purely educational, meant for experimentation in controlled envi
    - Writes the modified MBR back to the disk, making the system unbootable.  
 
 3. **Trigger a BSOD**  
-   - Adjust privileges via RtlAdjustPrivilege 
+   - Adjust privileges via RtlAdjustPrivilege.
    - Forces a system crash by raising a critical error through NtRaiseHardError.
 
 ---
