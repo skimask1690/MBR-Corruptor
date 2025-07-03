@@ -44,12 +44,6 @@ This project is released under the [MIT License](LICENSE).
 
 ---
 
-## 🔧 Future Improvements
-
-- Currently, this script relies on Add-Type to compile and execute C# code to trigger the BSOD. This can be improved by using dynamic signatures, which eliminates the need for calling CSC and prevents on-disk artifacts.
-
----
-
 ## 🛑 Final Warning  
 
 💀 **Running this script will permanently damage the system. Proceed only if you fully understand the risks.**  
