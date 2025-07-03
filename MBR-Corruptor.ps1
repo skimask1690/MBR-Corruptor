@@ -2,7 +2,7 @@
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 if (-not $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "This script must be run as Admin to corrupt the MBR."
+    throw "`nThis script must be run as Admin to corrupt the MBR."
 }
 
 # Get all physical drives using CIM
