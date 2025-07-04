@@ -46,7 +46,7 @@ foreach ($drive in $drives) {
 # Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
 $asmName = New-Object Reflection.AssemblyName "PInvoke"
 $asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
-$mod = $asm.DefineDynamicModule("DynamicModule", $false)
+$mod = $asm.DefineDynamicModule("DynamicModule")
 $type = $mod.DefineType("NativeMethods")
 
 function Add-PInvoke {
